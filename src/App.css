@@ -1,0 +1,222 @@
+/* ===== APPLICATION STYLES ===== */
+
+/* Ensure proper text contrast in all contexts */
+.prose,
+.prose-sm,
+.prose-lg {
+  @apply text-text-primary;
+}
+
+.prose a,
+.prose-sm a,
+.prose-lg a {
+  @apply text-primary hover:text-primary/80;
+}
+
+/* Header and Navigation */
+header {
+  @apply bg-card text-card-foreground border-b border-border;
+}
+
+nav a {
+  @apply text-text-secondary hover:text-text-primary transition-colors;
+}
+
+nav a.active {
+  @apply text-primary font-semibold;
+}
+
+/* Main Content Areas */
+main {
+  @apply min-h-screen bg-background text-text-primary;
+}
+
+.container {
+  @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+}
+
+/* Section Backgrounds */
+section {
+  @apply bg-background;
+}
+
+section.bg-gradient-subtle {
+  @apply bg-gradient-subtle;
+}
+
+/* Card Components */
+.card-base {
+  @apply bg-card text-card-foreground border border-border rounded-lg p-6;
+}
+
+/* Form Elements */
+input,
+textarea,
+select {
+  @apply bg-input text-input-foreground border border-input-border placeholder:text-text-disabled;
+  @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
+}
+
+.dark input,
+.dark textarea,
+.dark select {
+  @apply bg-input text-input-foreground;
+}
+
+/* Button Focus States */
+button:focus-visible {
+  @apply outline-none ring-2 ring-ring ring-offset-2;
+}
+
+.dark button:focus-visible {
+  @apply ring-offset-background;
+}
+
+/* Links */
+a {
+  @apply text-primary hover:text-primary/80 transition-colors;
+}
+
+a:visited {
+  @apply text-primary/70;
+}
+
+/* Emphasis and Alerts */
+.alert {
+  @apply border-l-4 p-4 rounded;
+}
+
+.alert-success {
+  @apply bg-success-light border-success text-success-foreground;
+}
+
+.alert-warning {
+  @apply bg-warning-light border-warning text-warning-foreground;
+}
+
+.alert-error {
+  @apply bg-error-light border-error text-error-foreground;
+}
+
+.alert-info {
+  @apply bg-info-light border-info text-info-foreground;
+}
+
+/* Code Blocks */
+code {
+  @apply bg-muted text-text-primary px-2 py-1 rounded font-mono text-sm;
+}
+
+pre {
+  @apply bg-muted text-text-primary p-4 rounded overflow-auto;
+}
+
+pre code {
+  @apply p-0;
+}
+
+/* Tables */
+table {
+  @apply w-full border-collapse;
+}
+
+table thead {
+  @apply bg-muted text-text-primary;
+}
+
+table tbody tr {
+  @apply border-b border-border hover:bg-background-secondary transition-colors;
+}
+
+table td,
+table th {
+  @apply px-4 py-2 text-left;
+}
+
+/* Lists */
+ul,
+ol {
+  @apply text-text-secondary;
+}
+
+ul li,
+ol li {
+  @apply mb-2;
+}
+
+/* Headings */
+h1, h2, h3, h4, h5, h6 {
+  @apply text-text-primary font-bold;
+}
+
+h1 {
+  @apply text-4xl my-4;
+}
+
+h2 {
+  @apply text-3xl my-3;
+}
+
+h3 {
+  @apply text-2xl my-2;
+}
+
+h4 {
+  @apply text-xl my-2;
+}
+
+h5, h6 {
+  @apply text-lg my-1;
+}
+
+/* Paragraphs */
+p {
+  @apply text-text-secondary leading-relaxed mb-4;
+}
+
+small {
+  @apply text-text-tertiary;
+}
+
+/* Blockquote */
+blockquote {
+  @apply border-l-4 border-primary pl-4 py-2 my-4 italic text-text-secondary;
+}
+
+/* Horizontal Rules */
+hr {
+  @apply border-border my-6;
+}
+
+/* Focus visible for accessibility */
+*:focus-visible {
+  @apply outline-none ring-2 ring-ring ring-offset-2 rounded;
+}
+
+/* Disabled states */
+:disabled {
+  @apply opacity-60 cursor-not-allowed;
+}
+
+/* Loading states */
+.loading {
+  @apply opacity-60 pointer-events-none;
+}
+
+/* Animations */
+@media (prefers-reduced-motion: no-preference) {
+  * {
+    scroll-behavior: smooth;
+  }
+}
+
+/* Print styles */
+@media print {
+  body {
+    @apply bg-background text-text-primary;
+  }
+
+  .no-print {
+    @apply hidden;
+  }
+}
