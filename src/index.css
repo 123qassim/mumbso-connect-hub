@@ -26,21 +26,21 @@
     --popover: 0 0% 100%;
     --popover-foreground: 210 15% 15%;
 
-    /* Brand Colors - Biotech themed */
-    --primary: 174 62% 45%;                 /* Teal green (medical) */
+    /* Brand Colors - Biotech themed with Verdant Green */
+    --primary: 142 65% 45%;                 /* Verdant green */
     --primary-foreground: 0 0% 100%;        /* White text on primary */
-    --primary-light: 174 62% 92%;           /* Light teal background */
-    --primary-lighter: 174 62% 96%;         /* Very light teal */
+    --primary-light: 142 65% 92%;           /* Light verdant background */
+    --primary-lighter: 142 65% 96%;         /* Very light verdant */
 
-    --secondary: 210 85% 48%;               /* Deep blue */
+    --secondary: 120 70% 48%;               /* Deep forest green */
     --secondary-foreground: 0 0% 100%;      /* White text on secondary */
-    --secondary-light: 210 85% 93%;         /* Light blue background */
-    --secondary-lighter: 210 85% 97%;       /* Very light blue */
+    --secondary-light: 120 70% 93%;         /* Light forest green background */
+    --secondary-lighter: 120 70% 97%;       /* Very light forest green */
 
     /* Accent Color */
-    --accent: 142 76% 36%;                  /* Bright green */
+    --accent: 130 75% 42%;                  /* Vivid verdant green */
     --accent-foreground: 0 0% 100%;         /* White text on accent */
-    --accent-light: 142 76% 90%;            /* Light green background */
+    --accent-light: 130 75% 90%;            /* Light vivid green background */
 
     /* Semantic Colors - Light Mode */
     --success: 142 76% 45%;                 /* Green for success */
@@ -76,8 +76,8 @@
     --radius: 0.75rem;
 
     /* ===== GRADIENTS - LIGHT MODE ===== */
-    --gradient-hero: linear-gradient(135deg, hsl(174 62% 45%) 0%, hsl(210 85% 48%) 100%);
-    --gradient-accent: linear-gradient(135deg, hsl(142 76% 36%) 0%, hsl(174 62% 45%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(142 65% 45%) 0%, hsl(120 70% 48%) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(130 75% 42%) 0%, hsl(142 65% 45%) 100%);
     --gradient-subtle: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(210 40% 98%) 100%);
     --gradient-overlay: linear-gradient(135deg, rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0.1) 100%);
 
@@ -85,8 +85,8 @@
     --shadow-sm: 0 1px 2px 0 hsl(210 15% 15% / 0.05);
     --shadow-md: 0 4px 6px -1px hsl(210 15% 15% / 0.1);
     --shadow-lg: 0 10px 15px -3px hsl(210 15% 15% / 0.1);
-    --shadow-card: 0 10px 30px -10px hsl(174 62% 45% / 0.15);
-    --shadow-glow: 0 0 40px hsl(174 62% 45% / 0.25);
+    --shadow-card: 0 10px 30px -10px hsl(142 65% 45% / 0.15);
+    --shadow-glow: 0 0 40px hsl(142 65% 45% / 0.25);
 
     /* Transitions */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -95,35 +95,35 @@
   /* ===== DARK MODE ===== */
   .dark {
     /* Core backgrounds - Dark Mode */
-    --background: 210 20% 10%;              /* Very dark blue */
-    --background-secondary: 210 20% 15%;    /* Dark blue-gray */
+    --background: 210 15% 8%;               /* Almost black */
+    --background-secondary: 210 15% 12%;    /* Very dark blue-gray */
     --foreground: 0 0% 98%;                 /* Almost white text */
 
     /* Surface colors - Dark Mode */
-    --card: 210 20% 14%;                    /* Dark card background */
+    --card: 210 15% 10%;                    /* Very dark card background */
     --card-foreground: 0 0% 98%;            /* Almost white text on cards */
-    --surface: 210 20% 14%;
+    --surface: 210 15% 10%;
     --surface-foreground: 0 0% 98%;
 
     /* Popover and dialogs - Dark Mode */
-    --popover: 210 20% 14%;
+    --popover: 210 15% 10%;
     --popover-foreground: 0 0% 98%;
 
     /* Brand Colors - Dark Mode (brightened for visibility) */
-    --primary: 174 62% 55%;                 /* Brighter teal for visibility */
+    --primary: 142 65% 55%;                 /* Brighter verdant for visibility */
     --primary-foreground: 210 20% 10%;      /* Dark text on bright primary */
-    --primary-light: 174 62% 30%;           /* Dark teal background */
-    --primary-lighter: 174 62% 22%;         /* Very dark teal */
+    --primary-light: 142 65% 30%;           /* Dark verdant background */
+    --primary-lighter: 142 65% 22%;         /* Very dark verdant */
 
-    --secondary: 210 85% 58%;               /* Brighter blue */
+    --secondary: 120 70% 58%;               /* Brighter forest green */
     --secondary-foreground: 210 20% 10%;    /* Dark text on bright secondary */
-    --secondary-light: 210 85% 30%;         /* Dark blue background */
-    --secondary-lighter: 210 85% 22%;       /* Very dark blue */
+    --secondary-light: 120 70% 30%;         /* Dark forest green background */
+    --secondary-lighter: 120 70% 22%;       /* Very dark forest green */
 
     /* Accent Color - Dark Mode */
-    --accent: 142 76% 50%;                  /* Brighter green */
+    --accent: 130 75% 50%;                  /* Brighter vivid green */
     --accent-foreground: 210 20% 10%;       /* Dark text on bright accent */
-    --accent-light: 142 76% 28%;            /* Dark green background */
+    --accent-light: 130 75% 28%;            /* Dark vivid green background */
 
     /* Semantic Colors - Dark Mode */
     --success: 142 76% 50%;                 /* Brighter green */
@@ -143,30 +143,30 @@
     --text-inverse: 210 20% 10%;            /* Dark text on light bg */
 
     /* Interactive Elements - Dark Mode */
-    --muted: 210 20% 20%;                   /* Muted background */
+    --muted: 210 15% 16%;                   /* Muted background */
     --muted-foreground: 0 0% 75%;           /* Muted text */
 
     /* Forms and inputs - Dark Mode */
-    --input: 210 20% 18%;                   /* Dark input field */
-    --input-border: 210 20% 24%;            /* Dark border */
+    --input: 210 15% 12%;                   /* Dark input field */
+    --input-border: 210 15% 18%;            /* Dark border */
     --input-foreground: 0 0% 98%;           /* White text in input */
 
     /* Borders and rings - Dark Mode */
-    --border: 210 20% 24%;                  /* Dark border color */
-    --ring: 174 62% 55%;                    /* Focus ring (bright primary) */
+    --border: 210 15% 18%;                  /* Dark border color */
+    --ring: 142 65% 55%;                    /* Focus ring (bright verdant primary) */
 
     /* ===== GRADIENTS - DARK MODE ===== */
-    --gradient-hero: linear-gradient(135deg, hsl(174 62% 35%) 0%, hsl(210 85% 38%) 100%);
-    --gradient-accent: linear-gradient(135deg, hsl(142 76% 26%) 0%, hsl(174 62% 35%) 100%);
-    --gradient-subtle: linear-gradient(180deg, hsl(210 20% 10%) 0%, hsl(210 20% 15%) 100%);
-    --gradient-overlay: linear-gradient(135deg, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.2) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(142 65% 40%) 0%, hsl(120 70% 40%) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(130 75% 35%) 0%, hsl(142 65% 40%) 100%);
+    --gradient-subtle: linear-gradient(180deg, hsl(210 15% 8%) 0%, hsl(210 15% 12%) 100%);
+    --gradient-overlay: linear-gradient(135deg, rgba(0, 0, 0, 0.6) 0%, rgba(0, 0, 0, 0.3) 100%);
 
     /* ===== SHADOWS - DARK MODE ===== */
     --shadow-sm: 0 1px 2px 0 hsl(0 0% 0% / 0.3);
     --shadow-md: 0 4px 6px -1px hsl(0 0% 0% / 0.3);
     --shadow-lg: 0 10px 15px -3px hsl(0 0% 0% / 0.4);
     --shadow-card: 0 10px 30px -10px hsl(0 0% 0% / 0.5);
-    --shadow-glow: 0 0 40px hsl(174 62% 55% / 0.2);
+    --shadow-glow: 0 0 40px hsl(142 65% 55% / 0.2);
   }
 }
 
