@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { Loader2, Users, Lightbulb, Network, Award, BookOpen, Target } from "lucide-react";
@@ -20,6 +20,8 @@ const Join = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const [password, setPassword] = useState("");
+  const [passwordConfirm, setPasswordConfirm] = useState("");
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -28,6 +30,13 @@ const Join = () => {
     course: "",
     interests: "",
   });
+
+  // Redirect if user is already logged in
+  useEffect(() => {
+    if (user) {
+      navigate("/dashboard");
+    }
+  }, [user, navigate]);
 
   const benefits = [
     { icon: Users, title: "Network & Community", description: "Connect with like-minded biotechnology enthusiasts and professionals" },
@@ -50,9 +59,53 @@ const Join = () => {
       return;
     }
 
+    if (!password || !passwordConfirm) {
+      toast({
+        title: "Password required",
+        description: "Please enter a password",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (password !== passwordConfirm) {
+      toast({
+        title: "Passwords don't match",
+        description: "Please ensure both password fields match",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (password.length < 6) {
+      toast({
+        title: "Password too short",
+        description: "Password must be at least 6 characters",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
 
     try {
+      // Create auth account
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: formData.email,
+        password: password,
+        options: {
+          data: {
+            name: formData.name,
+            phone: formData.phone,
+            year_of_study: formData.year_of_study,
+            course: formData.course,
+            interests: formData.interests,
+          }
+        }
+      });
+
+      if (authError) throw authError;
+
       // Add to community members
       const { error: communityError } = await supabase
         .from("community_members")
@@ -66,23 +119,24 @@ const Join = () => {
         }]);
 
       if (communityError && communityError.code !== "23505") {
-        throw communityError;
+        console.error("Community error:", communityError);
+        // Don't throw - account was created successfully
       }
 
       toast({
-        title: "Successfully joined MUMBSO!",
-        description: "Your registration is complete. Please log in to access your dashboard.",
+        title: "Account created successfully!",
+        description: "Welcome to MUMBSO! You are now logged in.",
       });
 
-      // Redirect to auth page to login
+      // Redirect to dashboard
       setTimeout(() => {
-        navigate("/auth");
-      }, 2000);
-    } catch (error) {
+        navigate("/dashboard");
+      }, 1500);
+    } catch (error: any) {
       console.error("Registration error:", error);
       toast({
         title: "Error",
-        description: "Failed to complete registration. Please try again.",
+        description: error.message || "Failed to complete registration. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -93,7 +147,7 @@ const Join = () => {
   return (
     <div className="min-h-screen bg-background">
       <SEO 
-        title="Join MUMBSO - Membership Onboarding"
+        title="Join MUMBSO - Create Your Account"
         description="Become part of MUMBSO and access exclusive biotechnology workshops, research opportunities, and professional networking events."
       />
       <Header />
@@ -155,78 +209,19 @@ const Join = () => {
         </div>
       </section>
 
-      {/* Membership Options */}
+      {/* Registration Form Section */}
       <section className="py-20 bg-accent/5">
         <div className="container">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Membership Plans</h2>
-            <p className="text-lg text-muted-foreground">Choose the membership tier that works best for you</p>
-          </div>
-
-          {tiersLoading ? (
-            <div className="flex justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-          ) : (
-            <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-              {tiers?.map((tier) => (
-                <Card
-                  key={tier.id}
-                  className={`relative overflow-hidden transition-all cursor-pointer hover:shadow-lg ${
-                    selectedTier === tier.id
-                      ? "ring-2 ring-primary shadow-xl"
-                      : ""
-                  }`}
-                  onClick={() => handleSelectTier(tier.id)}
-                >
-                  <CardHeader>
-                    <CardTitle>{tier.name}</CardTitle>
-                    <CardDescription>{tier.duration_months} months membership</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div className="space-y-1">
-                      <p className="text-4xl font-bold">KES {Number(tier.price).toLocaleString()}</p>
-                      <p className="text-sm text-muted-foreground">One-time payment</p>
-                    </div>
-                    
-                    <p className="text-muted-foreground">{tier.description}</p>
-
-                    {tier.benefits && typeof tier.benefits === 'object' && (
-                      <ul className="space-y-3">
-                        {Object.entries(tier.benefits as Record<string, boolean>)
-                          .filter(([_, value]) => value)
-                          .map(([key, _], idx) => (
-                            <li key={idx} className="flex items-center gap-3">
-                              <Check className="h-5 w-5 text-primary flex-shrink-0" />
-                              <span className="text-sm capitalize">{key.replace(/_/g, ' ')}</span>
-                            </li>
-                          ))}
-                      </ul>
-                    )}
-
-                    <Button 
-                      className="w-full mt-6"
-                      variant={selectedTier === tier.id ? "default" : "outline"}
-                    >
-                      {selectedTier === tier.id ? "Selected" : "Choose Plan"}
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* Payment Methods */}Start Your Journey</h2>
-            <p className="text-lg text-muted-foreground">Sign up and get instant access to your member dashboard</p>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Create Your Account</h2>
+            <p className="text-lg text-muted-foreground">Sign up now and get instant access to your member dashboard</p>
           </div>
 
           <div className="max-w-2xl mx-auto">
             <Card>
               <CardHeader>
                 <CardTitle className="text-2xl">Join MUMBSO</CardTitle>
-                <CardDescription>Complete your registration to get started</CardDescription>
+                <CardDescription>Fill in your information and create your account</CardDescription>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-6">
@@ -309,6 +304,34 @@ const Join = () => {
                     />
                   </div>
 
+                  <div className="border-t pt-6">
+                    <h3 className="font-semibold mb-4">Account Credentials</h3>
+                    <div className="grid md:grid-cols-2 gap-6">
+                      <div>
+                        <Label htmlFor="password">Password *</Label>
+                        <Input
+                          id="password"
+                          type="password"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          required
+                          placeholder="At least 6 characters"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="passwordConfirm">Confirm Password *</Label>
+                        <Input
+                          id="passwordConfirm"
+                          type="password"
+                          value={passwordConfirm}
+                          onChange={(e) => setPasswordConfirm(e.target.value)}
+                          required
+                          placeholder="Confirm your password"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
                   <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
                     <p className="text-sm text-muted-foreground">
                       ✓ Your information is secure and will only be used for membership purposes
@@ -319,10 +342,10 @@ const Join = () => {
                     {isLoading ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Joining...
+                        Creating account...
                       </>
                     ) : (
-                      "Join MUMBSO"
+                      "Create Account & Join MUMBSO"
                     )}
                   </Button>
                 </form>
@@ -330,7 +353,10 @@ const Join = () => {
             </Card>
           </div>
         </div>
-      </section><section className="py-20 bg-primary text-white">
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-20 bg-primary text-white">
         <div className="container text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">What You Get as a Member</h2>
           <p className="text-lg text-white/90 mb-8 max-w-2xl mx-auto">
@@ -341,3 +367,10 @@ const Join = () => {
           </p>
         </div>
       </section>
+
+      <Footer />
+    </div>
+  );
+};
+
+export default Join;
