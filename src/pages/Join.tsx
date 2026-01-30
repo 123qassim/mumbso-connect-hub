@@ -8,11 +8,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { Check, Loader2, Users, Lightbulb, Network, Award, BookOpen, Target, CreditCard, Smartphone, Building2 } from "lucide-react";
+import { Loader2, Users, Lightbulb, Network, Award, BookOpen, Target } from "lucide-react";
 import joinBg from "@/assets/join-bg.jpg";
 import { SEO } from "@/components/SEO";
 
@@ -21,8 +20,6 @@ const Join = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedTier, setSelectedTier] = useState<string | null>(null);
-  const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -30,21 +27,6 @@ const Join = () => {
     year_of_study: "",
     course: "",
     interests: "",
-  });
-
-  // Fetch membership tiers
-  const { data: tiers, isLoading: tiersLoading } = useQuery({
-    queryKey: ["membership-tiers"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("membership_tiers")
-        .select("*")
-        .eq("active", true)
-        .order("price", { ascending: true });
-      
-      if (error) throw error;
-      return data;
-    },
   });
 
   const benefits = [
@@ -56,74 +38,13 @@ const Join = () => {
     { icon: Lightbulb, title: "Innovation & Leadership", description: "Lead initiatives and shape the future of biotechnology education" },
   ];
 
-  const paymentMethods = [
-    { 
-      icon: Smartphone, 
-      name: "M-Pesa", 
-      description: "Pay via M-Pesa SIM Toolkit",
-      details: [
-        "Bank: Kenya Commercial Bank (KCB)",
-        "Paybill Number: 522522",
-        "Account Number: 1270503820"
-      ],
-      instruction: "SIM Toolkit > Make Payment > Enter 522522 > Account: 1270503820 > Amount > PIN > OK"
-    },
-    { 
-      icon: Smartphone, 
-      name: "Airtel Money", 
-      description: "Pay via Airtel Money SIM Toolkit",
-      details: [
-        "Bank: Kenya Commercial Bank (KCB)",
-        "Paybill Number: 522522",
-        "Account Number: 1270503820"
-      ],
-      instruction: "SIM Toolkit > Make Payment > Enter 522522 > Account: 1270503820 > Amount > PIN > OK"
-    },
-    { 
-      icon: Building2, 
-      name: "Bank Transfer", 
-      description: "Direct bank transfer via KCB",
-      details: [
-        "Bank: Kenya Commercial Bank (KCB)",
-        "Business Number: 522522",
-        "Account Number: 1270503820"
-      ],
-      instruction: "Transfer to KCB account above with reference: MUMBSO"
-    },
-    { 
-      icon: CreditCard, 
-      name: "Card Payment", 
-      description: "International card payments",
-      details: [
-        "Gateway: Stripe",
-        "Status: Coming Soon"
-      ],
-      instruction: "International debit/credit card support coming soon"
-    },
-  ];
-
-  const handleSelectTier = (tierId: string) => {
-    setSelectedTier(tierId);
-    setShowForm(true);
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!user) {
+    if (!formData.name || !formData.email || !formData.year_of_study || !formData.course) {
       toast({
-        title: "Please log in",
-        description: "You need to be logged in to join as a paid member",
-        variant: "destructive",
-      });
-      navigate("/auth");
-      return;
-    }
-
-    if (!selectedTier) {
-      toast({
-        title: "Select a membership tier",
-        description: "Please choose a membership tier to continue",
+        title: "Missing required fields",
+        description: "Please fill in all required fields",
         variant: "destructive",
       });
       return;
@@ -132,34 +53,36 @@ const Join = () => {
     setIsLoading(true);
 
     try {
-      // First add to community members
+      // Add to community members
       const { error: communityError } = await supabase
         .from("community_members")
-        .insert([{ ...formData, email: user.email }]);
+        .insert([{ 
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          year_of_study: formData.year_of_study,
+          course: formData.course,
+          interests: formData.interests,
+        }]);
 
       if (communityError && communityError.code !== "23505") {
         throw communityError;
       }
 
-      // Create Stripe checkout session
-      const { data, error } = await supabase.functions.invoke("create-checkout", {
-        body: { tierId: selectedTier },
+      toast({
+        title: "Successfully joined MUMBSO!",
+        description: "Your registration is complete. Please log in to access your dashboard.",
       });
 
-      if (error) throw error;
-
-      if (data.url) {
-        window.open(data.url, "_blank");
-        toast({
-          title: "Redirecting to checkout",
-          description: "Complete your payment to activate membership",
-        });
-      }
+      // Redirect to auth page to login
+      setTimeout(() => {
+        navigate("/auth");
+      }, 2000);
     } catch (error) {
-      console.error("Checkout error:", error);
+      console.error("Registration error:", error);
       toast({
         title: "Error",
-        description: "Failed to initiate checkout. Please try again.",
+        description: "Failed to complete registration. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -295,58 +218,15 @@ const Join = () => {
         </div>
       </section>
 
-      {/* Payment Methods */}
-      <section className="py-20 bg-background">
-        <div className="container">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Payment Methods</h2>
-            <p className="text-lg text-muted-foreground">Multiple secure payment options available</p>
+      {/* Payment Methods */}Start Your Journey</h2>
+            <p className="text-lg text-muted-foreground">Sign up and get instant access to your member dashboard</p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-            {paymentMethods.map((method, index) => {
-              const Icon = method.icon;
-              return (
-                <Card key={index} className="hover:shadow-lg transition-shadow">
-                  <CardHeader>
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-                        <Icon className="w-5 h-5 text-primary" />
-                      </div>
-                      <CardTitle className="text-lg">{method.name}</CardTitle>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <p className="text-sm text-muted-foreground">{method.description}</p>
-                    {method.details && method.details.length > 0 && (
-                      <ul className="space-y-2">
-                        {method.details.map((detail, idx) => (
-                          <li key={idx} className="text-sm flex gap-2">
-                            <span className="text-primary font-medium">•</span>
-                            <span className="text-muted-foreground">{detail}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                    <p className="text-sm font-medium border-t pt-3">
-                      {method.instruction}
-                    </p>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* Registration Form */}
-      {showForm && (
-        <section className="py-20 bg-accent/5">
-          <div className="container max-w-2xl">
+          <div className="max-w-2xl mx-auto">
             <Card>
               <CardHeader>
-                <CardTitle className="text-2xl">Complete Your Registration</CardTitle>
-                <CardDescription>Provide your information to finalize membership</CardDescription>
+                <CardTitle className="text-2xl">Join MUMBSO</CardTitle>
+                <CardDescription>Complete your registration to get started</CardDescription>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-6">
@@ -392,7 +272,6 @@ const Join = () => {
                       <Select
                         value={formData.year_of_study}
                         onValueChange={(value) => setFormData({ ...formData, year_of_study: value })}
-                        required
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Select your year" />
@@ -440,42 +319,25 @@ const Join = () => {
                     {isLoading ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Processing...
+                        Joining...
                       </>
                     ) : (
-                      "Proceed to Payment"
+                      "Join MUMBSO"
                     )}
                   </Button>
-                  {!user && (
-                    <p className="text-sm text-center text-muted-foreground">
-                      You'll be redirected to log in before payment
-                    </p>
-                  )}
                 </form>
               </CardContent>
             </Card>
           </div>
-        </section>
-      )}
-
-      {/* CTA Section */}
-      {!showForm && (
-        <section className="py-20 bg-primary text-white">
-          <div className="container text-center">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Ready to Join?</h2>
-            <p className="text-lg text-white/90 mb-8 max-w-2xl mx-auto">
-              Select a membership plan above to get started on your journey with MUMBSO
-            </p>
-            <p className="text-white/80">
-              Questions? <a href="/contact" className="underline hover:text-white transition-colors">Contact us</a>
-            </p>
-          </div>
-        </section>
-      )}
-
-      <Footer />
-    </div>
-  );
-};
-
-export default Join;
+        </div>
+      </section><section className="py-20 bg-primary text-white">
+        <div className="container text-center">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">What You Get as a Member</h2>
+          <p className="text-lg text-white/90 mb-8 max-w-2xl mx-auto">
+            Access exclusive opportunities, connect with peers, and advance your career in biotechnology
+          </p>
+          <p className="text-white/80">
+            Questions? <a href="/contact" className="underline hover:text-white transition-colors">Contact us</a>
+          </p>
+        </div>
+      </section>
