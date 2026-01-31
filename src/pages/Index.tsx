@@ -94,7 +94,7 @@ const Index = () => {
               <p className="text-lg text-muted-foreground mb-8">
                 We bridge the gap between biotechnology and IT, focusing on research, education, community outreach, and career development. Our activities include workshops, research projects, guest lectures, conferences, internships, and community health initiatives.
               </p>
-              <Button asChild variant="hero" size="lg">
+              <Button asChild size="lg" className="bg-primary text-white hover:bg-primary/90 shadow-lg font-semibold">
                 <Link to="/about">Learn More About Us</Link>
               </Button>
             </div>
@@ -130,7 +130,7 @@ const Index = () => {
               <p className="text-lg text-muted-foreground mb-8">
                 MUMBSO members have reached thousands of community members, providing education on infectious diseases, antimicrobial resistance, and the role of biotechnology in modern healthcare.
               </p>
-              <Button asChild variant="accent" size="lg">
+              <Button asChild size="lg" className="bg-primary text-white hover:bg-primary/90 shadow-lg font-semibold">
                 <Link to="/programs">View Our Programs</Link>
               </Button>
             </div>
