@@ -30,7 +30,7 @@ interface Profile {
 }
 
 const Profile = () => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -54,6 +54,11 @@ const Profile = () => {
   });
 
   useEffect(() => {
+    // Wait for auth loading to complete before redirecting
+    if (authLoading) {
+      return;
+    }
+
     if (!user) {
       navigate("/auth");
       return;
@@ -99,7 +104,7 @@ const Profile = () => {
     };
 
     fetchProfile();
-  }, [user, navigate, toast]);
+  }, [user, navigate, toast, authLoading]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -132,31 +137,41 @@ const Profile = () => {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSaving(true);
+
+    if (!user) return;
+
+    // Validate phone
+    if (formData.phone && !validatePhoneNumber(formData.phone)) {
+      setPhoneError("Invalid phone number");
+      return;
+    }
     setPhoneError("");
 
-    try {
-      // Validate phone if provided
-      if (formData.phone && !validatePhoneNumber(formData.phone)) {
-        setPhoneError("Please enter a valid Kenyan phone number");
-        setIsSaving(false);
-        return;
-      }
+    // Validate interests
+    if (selectedInterests.length === 0) {
+      toast({ title: "Required", description: "Select at least one interest", variant: "destructive" });
+      return;
+    }
 
+    setIsSaving(true);
+
+    try {
       let avatarUrl = imagePreview;
 
-      // Upload image if changed
+      // Upload image if new file selected
       if (imageFile) {
-        const fileName = `${user?.id}-${Date.now()}`;
+        const fileExt = imageFile.name.split(".").pop();
+        const filePath = `${user.id}/avatar.${fileExt}`;
+
         const { error: uploadError } = await supabase.storage
           .from("avatars")
-          .upload(fileName, imageFile, { upsert: true });
+          .upload(filePath, imageFile, { upsert: true });
 
         if (uploadError) throw uploadError;
 
         const { data: urlData } = supabase.storage
           .from("avatars")
-          .getPublicUrl(fileName);
+          .getPublicUrl(filePath);
 
         avatarUrl = urlData.publicUrl;
       }
@@ -167,28 +182,25 @@ const Profile = () => {
         .update({
           first_name: formData.first_name,
           surname: formData.surname,
-          email: formData.email,
-          phone: formData.phone ? formatPhoneNumber(formData.phone) : "",
+          phone: formatPhoneNumber(formData.phone),
           year_of_study: isAlumni ? "Alumni" : formData.year_of_study,
-          course: formData.course,
           interests: selectedInterests.join(", "),
           is_alumni: isAlumni,
           avatar_url: avatarUrl,
+          updated_at: new Date().toISOString(),
         })
-        .eq("id", user?.id);
+        .eq("id", user.id);
 
       if (error) throw error;
 
-      setProfile(prev => prev ? { ...prev, ...formData, avatar_url: avatarUrl } : null);
-      setImageFile(null);
-
       toast({ title: "Success", description: "Profile updated successfully" });
+      navigate("/dashboard");
     } catch (error) {
       const err = error as Error;
-      console.error("Error updating profile:", err);
+      console.error("Save error:", err);
       toast({
         title: "Error",
-        description: err.message || "Failed to update profile",
+        description: err.message || "Failed to save profile",
         variant: "destructive",
       });
     } finally {
@@ -196,7 +208,7 @@ const Profile = () => {
     }
   };
 
-  if (isLoading) {
+  if (authLoading || isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
@@ -243,36 +255,26 @@ const Profile = () => {
                   <CardTitle>Profile Picture</CardTitle>
                   <CardDescription>Upload a professional profile photo</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-6">
+                <CardContent className="space-y-4">
                   <div className="flex items-center gap-6">
-                    <div className="relative">
+                    <div className="w-32 h-32 rounded-lg bg-muted flex items-center justify-center overflow-hidden border-2 border-dashed border-muted-foreground/20">
                       {imagePreview ? (
-                        <img
-                          src={imagePreview}
-                          alt="Preview"
-                          className="w-24 h-24 rounded-full object-cover border-4 border-primary"
-                        />
+                        <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
                       ) : (
-                        <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center border-4 border-muted-foreground/20">
-                          <span className="text-xs text-muted-foreground">No image</span>
+                        <div className="text-center text-muted-foreground">
+                          <Upload className="w-6 h-6 mx-auto mb-2" />
+                          <p className="text-xs">No image</p>
                         </div>
                       )}
                     </div>
-                    <div className="flex-1">
-                      <label htmlFor="avatar" className="block mb-3">
-                        <div className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg cursor-pointer hover:bg-primary/90 transition-colors w-fit">
-                          <Upload className="w-4 h-4" />
-                          Choose Image
-                        </div>
-                      </label>
-                      <input
-                        id="avatar"
+                    <div>
+                      <Input
                         type="file"
                         accept="image/*"
                         onChange={handleImageChange}
-                        className="hidden"
+                        className="mb-2"
                       />
-                      <p className="text-xs text-muted-foreground">JPG, PNG up to 5MB</p>
+                      <p className="text-xs text-muted-foreground">Max 5MB. JPG, PNG recommended.</p>
                     </div>
                   </div>
                 </CardContent>
@@ -282,49 +284,43 @@ const Profile = () => {
               <Card>
                 <CardHeader>
                   <CardTitle>Personal Information</CardTitle>
-                  <CardDescription>Your basic member details</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="grid md:grid-cols-2 gap-6">
                     <div>
-                      <Label htmlFor="first_name">First Name</Label>
+                      <Label htmlFor="first_name">First Name *</Label>
                       <Input
                         id="first_name"
                         value={formData.first_name}
                         onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
-                        disabled
-                        className="bg-muted cursor-not-allowed"
+                        required
                       />
-                      <p className="text-xs text-muted-foreground mt-1">Cannot be changed</p>
                     </div>
                     <div>
-                      <Label htmlFor="surname">Surname</Label>
+                      <Label htmlFor="surname">Surname *</Label>
                       <Input
                         id="surname"
                         value={formData.surname}
                         onChange={(e) => setFormData({ ...formData, surname: e.target.value })}
-                        disabled
-                        className="bg-muted cursor-not-allowed"
+                        required
                       />
-                      <p className="text-xs text-muted-foreground mt-1">Cannot be changed</p>
                     </div>
                   </div>
 
                   <div>
-                    <Label htmlFor="email">Email Address</Label>
+                    <Label htmlFor="email">Email</Label>
                     <Input
                       id="email"
                       type="email"
                       value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                       disabled
-                      className="bg-muted cursor-not-allowed"
+                      className="bg-muted"
                     />
-                    <p className="text-xs text-muted-foreground mt-1">Cannot be changed</p>
+                    <p className="text-xs text-muted-foreground mt-1">Email cannot be changed</p>
                   </div>
 
                   <div>
-                    <Label htmlFor="phone">Phone Number</Label>
+                    <Label htmlFor="phone">Phone Number *</Label>
                     <Input
                       id="phone"
                       type="tel"
@@ -333,11 +329,10 @@ const Profile = () => {
                         setFormData({ ...formData, phone: e.target.value });
                         setPhoneError("");
                       }}
-                      placeholder="0712345678"
                       className={phoneError ? "border-destructive" : ""}
+                      placeholder="0712345678"
                     />
                     {phoneError && <p className="text-sm text-destructive mt-1">{phoneError}</p>}
-                    {!phoneError && <p className="text-xs text-muted-foreground mt-1">Format: 0712345678 or +254712345678</p>}
                   </div>
                 </CardContent>
               </Card>
@@ -346,57 +341,41 @@ const Profile = () => {
               <Card>
                 <CardHeader>
                   <CardTitle>Academic Information</CardTitle>
-                  <CardDescription>Your academic details and status</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="space-y-4">
                     <div className="flex items-center gap-3">
                       <Checkbox
-                        id="alumni-toggle"
+                        id="alumni"
                         checked={isAlumni}
                         onCheckedChange={(checked) => setIsAlumni(checked as boolean)}
                       />
-                      <Label htmlFor="alumni-toggle" className="font-normal cursor-pointer">
+                      <Label htmlFor="alumni" className="font-normal cursor-pointer">
                         I am an Alumni
                       </Label>
                     </div>
-
-                    {!isAlumni && (
-                      <div>
-                        <Label htmlFor="year-select">Year of Study</Label>
-                        <select
-                          id="year-select"
-                          title="Year of Study"
-                          value={formData.year_of_study}
-                          onChange={(e) => setFormData({ ...formData, year_of_study: e.target.value })}
-                          className="w-full px-3 py-2 border rounded-lg bg-background"
-                        >
-                          <option value="Year 1">Year 1</option>
-                          <option value="Year 2">Year 2</option>
-                          <option value="Year 3">Year 3</option>
-                          <option value="Year 4">Year 4</option>
-                        </select>
-                      </div>
-                    )}
                   </div>
 
                   <div>
                     <Label htmlFor="course">Course / Program</Label>
-                    <div className="p-3 bg-muted rounded-lg border border-muted-foreground/20">
-                      <p className="font-semibold text-sm">{formData.course}</p>
-                      <p className="text-xs text-muted-foreground mt-1">(Pre-filled and cannot be changed)</p>
-                    </div>
+                    <Input
+                      id="course"
+                      value={formData.course}
+                      disabled
+                      className="bg-muted"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">Course is locked</p>
                   </div>
                 </CardContent>
               </Card>
 
-              {/* Areas of Interest */}
+              {/* Interests */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Areas of Interest</CardTitle>
-                  <CardDescription>Select up to 3 areas of interest (can be updated)</CardDescription>
+                  <CardTitle>Areas of Interest *</CardTitle>
+                  <CardDescription>Select up to 3 areas that interest you</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-8">
+                <CardContent className="space-y-6">
                   {ALL_INTERESTS.map((categoryGroup) => (
                     <div key={categoryGroup.category}>
                       <h4 className="font-semibold text-sm mb-4 text-primary">{categoryGroup.category}</h4>
@@ -404,12 +383,12 @@ const Profile = () => {
                         {categoryGroup.items.map((interest) => (
                           <div key={interest} className="flex items-center">
                             <Checkbox
-                              id={`interest-${interest}`}
+                              id={interest}
                               checked={selectedInterests.includes(interest)}
                               onCheckedChange={() => toggleInterest(interest)}
                               disabled={selectedInterests.length >= 3 && !selectedInterests.includes(interest)}
                             />
-                            <Label htmlFor={`interest-${interest}`} className="ml-3 font-normal cursor-pointer text-sm">
+                            <Label htmlFor={interest} className="ml-3 font-normal cursor-pointer text-sm">
                               {interest}
                             </Label>
                           </div>
@@ -418,36 +397,22 @@ const Profile = () => {
                     </div>
                   ))}
 
-                  <div className="mt-4 p-3 bg-primary/10 rounded-lg border border-primary/20">
-                    <p className="text-sm">Selected: <span className="font-semibold">{selectedInterests.length}/3</span></p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Account Notice */}
-              <Card className="border-blue-200 bg-blue-50">
-                <CardContent className="pt-6">
-                  <div className="flex items-start gap-3">
-                    <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
-                    <div className="text-sm text-blue-900">
-                      <p className="font-semibold mb-1">Account Security</p>
-                      <p>To change your email address or password, please contact support.</p>
+                  {selectedInterests.length === 0 && (
+                    <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg flex items-start gap-2">
+                      <AlertCircle className="w-4 h-4 text-destructive mt-0.5 flex-shrink-0" />
+                      <p className="text-sm text-destructive">Please select at least one interest</p>
                     </div>
-                  </div>
+                  )}
                 </CardContent>
               </Card>
 
               {/* Save Button */}
-              <div className="flex gap-3 pt-6 border-t">
+              <div className="flex gap-3">
                 <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => navigate("/dashboard")}
+                  type="submit"
                   disabled={isSaving}
+                  className="flex-1"
                 >
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={isSaving} className="flex-1">
                   {isSaving ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -459,6 +424,13 @@ const Profile = () => {
                       Save Changes
                     </>
                   )}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => navigate("/dashboard")}
+                >
+                  Cancel
                 </Button>
               </div>
             </form>
