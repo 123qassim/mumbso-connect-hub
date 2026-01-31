@@ -164,7 +164,19 @@ const Join = () => {
         }
       });
 
-      if (authError) throw authError;
+      if (authError) {
+        // Handle email confirmation errors gracefully
+        if (authError.message.includes("Email confirmation")) {
+          console.warn("Email confirmation error:", authError);
+          toast({ 
+            title: "Account created!", 
+            description: "Please verify your email before logging in.", 
+            variant: "default" 
+          });
+        } else {
+          throw authError;
+        }
+      }
 
       const { error: communityError } = await supabase
         .from("community_members")
