@@ -1,169 +1,388 @@
-import { useAuth } from "@/hooks/useAuth";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import { SEO } from "@/components/SEO";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, User, Mail, Award, Clock } from "lucide-react";
-import { format } from "date-fns";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { SEO } from "@/components/SEO";
+import { LogOut, User, Calendar, BookOpen, Zap, Settings, Users, Download, Mail, Phone, Briefcase } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+
+interface Profile {
+  id: string;
+  first_name: string;
+  surname: string;
+  email: string;
+  phone: string;
+  year_of_study: string;
+  course: string;
+  interests: string;
+  is_alumni: boolean;
+  avatar_url: string | null;
+  created_at: string;
+}
 
 const Dashboard = () => {
-  const { user, loading } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [upcomingEvents, setUpcomingEvents] = useState(0);
 
   useEffect(() => {
-    if (!loading && !user) {
+    if (!user) {
       navigate("/auth");
+      return;
     }
-  }, [user, loading, navigate]);
 
-  const { data: registrations } = useQuery({
-    queryKey: ["my-registrations", user?.email],
-    queryFn: async () => {
-      if (!user?.email) return [];
-      
-      const { data, error } = await supabase
-        .from("event_registrations")
-        .select(`
-          *,
-          events (*)
-        `)
-        .eq("user_email", user.email)
-        .order("registered_at", { ascending: false });
+    const fetchProfile = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", user.id)
+          .single();
 
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!user?.email,
-  });
+        if (error && error.code !== "PGRST116") {
+          console.error("Error fetching profile:", error);
+        }
 
-  const { data: profile } = useQuery({
-    queryKey: ["profile", user?.id],
-    queryFn: async () => {
-      if (!user?.id) return null;
-      
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .single();
+        if (data) {
+          setProfile(data);
+        }
 
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!user?.id,
-  });
+        // Fetch upcoming events count
+        const { count } = await supabase
+          .from("events")
+          .select("*", { count: "exact", head: true })
+          .gte("date", new Date().toISOString());
 
-  if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+        if (count !== null) {
+          setUpcomingEvents(count);
+        }
+      } catch (error) {
+        console.error("Error:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, [user, navigate]);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    toast({ title: "Logged out", description: "See you soon!" });
+    navigate("/");
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading your dashboard...</p>
+        </div>
+      </div>
+    );
   }
 
-  if (!user) {
-    return null;
-  }
+  const completionPercentage = profile
+    ? Math.round(
+        (
+          Number(!!profile.avatar_url) +
+          Number(!!profile.phone) +
+          Number(!!profile.interests) +
+          Number(!!profile.year_of_study)
+        ) / 4 * 100
+      )
+    : 0;
+
+  const quickStats = [
+    { icon: Users, label: "Community Members", value: "150+", color: "bg-primary/10 text-primary" },
+    { icon: Calendar, label: "Upcoming Events", value: upcomingEvents, color: "bg-accent/10 text-accent" },
+    { icon: BookOpen, label: "Research Papers", value: "45+", color: "bg-secondary/10 text-secondary" },
+    { icon: Zap, label: "Active Programs", value: "8", color: "bg-orange-100 text-orange-600" },
+  ];
 
   return (
-    <>
-      <SEO
-        title="Member Dashboard"
-        description="View your MUMBSO profile, event registrations, and activity."
+    <div className="min-h-screen bg-background">
+      <SEO 
+        title="Your Dashboard - MUMBSO Member"
+        description="Welcome to your MUMBSO membership dashboard. View your profile, manage settings, and discover member benefits."
       />
-      <div className="min-h-screen flex flex-col">
-        <Header />
-        <main className="flex-1 py-12 px-4">
-          <div className="container mx-auto">
-            <div className="mb-8">
-              <h1 className="text-4xl font-bold mb-2">Welcome back, {profile?.display_name || user.email}!</h1>
-              <p className="text-muted-foreground">Manage your MUMBSO membership and activities</p>
+      <Header />
+
+      <section className="relative py-12 bg-gradient-to-r from-primary to-primary/80 text-white">
+        <div className="container">
+          <div className="flex items-start justify-between gap-6">
+            <div>
+              <h1 className="text-4xl font-bold mb-2">
+                Welcome, {profile?.first_name || "Member"}!
+              </h1>
+              <p className="text-white/90">
+                Your membership is active. Explore all the benefits and opportunities available to you.
+              </p>
             </div>
-
-            <div className="grid md:grid-cols-3 gap-6 mb-8">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium">Profile</CardTitle>
-                  <User className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <Mail className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm">{user.email}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Clock className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm">Member since {format(new Date(user.created_at), "MMM yyyy")}</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium">Event Registrations</CardTitle>
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold">{registrations?.length || 0}</div>
-                  <p className="text-xs text-muted-foreground mt-1">Total events registered</p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium">Membership Status</CardTitle>
-                  <Award className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <Badge variant="secondary" className="text-sm">Active Member</Badge>
-                  <p className="text-xs text-muted-foreground mt-2">Full access to all features</p>
-                </CardContent>
-              </Card>
-            </div>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>My Event Registrations</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {!registrations || registrations.length === 0 ? (
-                  <div className="text-center py-8">
-                    <p className="text-muted-foreground mb-4">You haven't registered for any events yet.</p>
-                    <Button onClick={() => navigate("/events")}>Browse Events</Button>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {registrations.map((reg: any) => (
-                      <div
-                        key={reg.id}
-                        className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
-                      >
-                        <div>
-                          <h3 className="font-semibold">{reg.events.title}</h3>
-                          <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
-                            <div className="flex items-center gap-1">
-                              <Calendar className="h-4 w-4" />
-                              <span>{format(new Date(reg.events.event_date), "PPP")}</span>
-                            </div>
-                            <Badge variant="outline">{reg.events.event_type}</Badge>
-                          </div>
-                        </div>
-                        <Badge>Registered</Badge>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            <Button
+              onClick={handleLogout}
+              variant="outline"
+              className="border-white text-white hover:bg-white/10"
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              Logout
+            </Button>
           </div>
-        </main>
-        <Footer />
-      </div>
-    </>
+        </div>
+      </section>
+
+      <section className="py-12 bg-accent/5">
+        <div className="container">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {quickStats.map((stat, index) => {
+              const Icon = stat.icon;
+              return (
+                <Card key={index} className="hover:shadow-lg transition-shadow">
+                  <CardContent className="pt-6">
+                    <div className={`w-12 h-12 rounded-lg flex items-center justify-center mb-4 ${stat.color}`}>
+                      <Icon className="w-6 h-6" />
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-1">{stat.label}</p>
+                    <p className="text-3xl font-bold">{stat.value}</p>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      <section className="py-12 border-b">
+        <div className="container">
+          <div className="grid lg:grid-cols-3 gap-8">
+            {/* Profile Card */}
+            <div className="lg:col-span-2 space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Member Profile</CardTitle>
+                  <CardDescription>Your membership information and settings</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="flex items-start justify-between pb-6 border-b">
+                    <div>
+                      <div className="flex items-center gap-4">
+                        {profile?.avatar_url ? (
+                          <img
+                            src={profile.avatar_url}
+                            alt={profile?.first_name}
+                            className="w-16 h-16 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                            <User className="w-8 h-8 text-primary" />
+                          </div>
+                        )}
+                        <div>
+                          <h3 className="text-xl font-bold">
+                            {profile?.first_name} {profile?.surname}
+                          </h3>
+                          <p className="text-sm text-muted-foreground">
+                            {profile?.is_alumni ? "Alumni Member" : "Active Member"}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    <Button
+                      onClick={() => navigate("/profile")}
+                      variant="outline"
+                      size="sm"
+                    >
+                      <Settings className="w-4 h-4 mr-2" />
+                      Edit Profile
+                    </Button>
+                  </div>
+
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Mail className="w-4 h-4 text-muted-foreground" />
+                        <p className="text-sm font-semibold text-muted-foreground">Email</p>
+                      </div>
+                      <p className="font-medium">{profile?.email}</p>
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Phone className="w-4 h-4 text-muted-foreground" />
+                        <p className="text-sm font-semibold text-muted-foreground">Phone</p>
+                      </div>
+                      <p className="font-medium">{profile?.phone || "Not provided"}</p>
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Briefcase className="w-4 h-4 text-muted-foreground" />
+                        <p className="text-sm font-semibold text-muted-foreground">Course</p>
+                      </div>
+                      <p className="font-medium">{profile?.course}</p>
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <BookOpen className="w-4 h-4 text-muted-foreground" />
+                        <p className="text-sm font-semibold text-muted-foreground">Status</p>
+                      </div>
+                      <p className="font-medium">
+                        {profile?.is_alumni ? "Alumni" : profile?.year_of_study || "Not set"}
+                      </p>
+                    </div>
+                  </div>
+
+                  {profile?.interests && (
+                    <div>
+                      <p className="text-sm font-semibold text-muted-foreground mb-3">Areas of Interest</p>
+                      <div className="flex flex-wrap gap-2">
+                        {profile.interests.split(", ").map((interest) => (
+                          <div key={interest} className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium">
+                            {interest}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Membership Benefits */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Membership Benefits</CardTitle>
+                  <CardDescription>Access these exclusive member resources</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex items-start gap-4 p-4 bg-primary/5 rounded-lg border border-primary/10">
+                      <Calendar className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                      <div>
+                        <h4 className="font-semibold mb-1">Exclusive Events</h4>
+                        <p className="text-sm text-muted-foreground">
+                          Access to member-only workshops, seminars, and networking events
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-4 p-4 bg-secondary/5 rounded-lg border border-secondary/10">
+                      <BookOpen className="w-5 h-5 text-secondary mt-0.5 flex-shrink-0" />
+                      <div>
+                        <h4 className="font-semibold mb-1">Research Library</h4>
+                        <p className="text-sm text-muted-foreground">
+                          Access to published research papers and scientific resources
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-4 p-4 bg-accent/5 rounded-lg border border-accent/10">
+                      <Users className="w-5 h-5 text-accent mt-0.5 flex-shrink-0" />
+                      <div>
+                        <h4 className="font-semibold mb-1">Mentorship Program</h4>
+                        <p className="text-sm text-muted-foreground">
+                          Connect with experienced professionals and research mentors
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Profile Completion Card */}
+            <div>
+              <Card className="sticky top-4">
+                <CardHeader>
+                  <CardTitle className="text-lg">Profile Completion</CardTitle>
+                  <CardDescription>Complete your profile to unlock more features</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-semibold">Completion Rate</span>
+                      <span className="text-2xl font-bold text-primary">{completionPercentage}%</span>
+                    </div>
+                    <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
+                      <div
+                        className="bg-primary h-full transition-all duration-500"
+                        style={{ width: `${completionPercentage}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2 text-sm">
+                      <div className={`w-4 h-4 rounded ${profile?.avatar_url ? "bg-primary" : "bg-muted"}`} />
+                      <span className={profile?.avatar_url ? "text-foreground" : "text-muted-foreground"}>
+                        Profile Picture
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <div className={`w-4 h-4 rounded ${profile?.phone ? "bg-primary" : "bg-muted"}`} />
+                      <span className={profile?.phone ? "text-foreground" : "text-muted-foreground"}>
+                        Phone Number
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <div className={`w-4 h-4 rounded ${profile?.interests ? "bg-primary" : "bg-muted"}`} />
+                      <span className={profile?.interests ? "text-foreground" : "text-muted-foreground"}>
+                        Areas of Interest
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <div className={`w-4 h-4 rounded ${profile?.year_of_study ? "bg-primary" : "bg-muted"}`} />
+                      <span className={profile?.year_of_study ? "text-foreground" : "text-muted-foreground"}>
+                        Academic Status
+                      </span>
+                    </div>
+                  </div>
+
+                  <Button
+                    onClick={() => navigate("/profile")}
+                    className="w-full"
+                  >
+                    <Zap className="w-4 h-4 mr-2" />
+                    Complete Profile
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="py-12 bg-accent/5">
+        <div className="container">
+          <Card>
+            <CardHeader>
+              <CardTitle>Quick Actions</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid md:grid-cols-3 gap-4">
+                <Button variant="outline" className="h-auto py-4 flex-col gap-2">
+                  <Calendar className="w-6 h-6" />
+                  <span>Browse Events</span>
+                </Button>
+                <Button variant="outline" className="h-auto py-4 flex-col gap-2">
+                  <Download className="w-6 h-6" />
+                  <span>Download Resources</span>
+                </Button>
+                <Button variant="outline" className="h-auto py-4 flex-col gap-2">
+                  <Users className="w-6 h-6" />
+                  <span>View Community</span>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+
+      <Footer />
+    </div>
   );
 };
 

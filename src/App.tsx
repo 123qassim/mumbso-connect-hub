@@ -19,6 +19,7 @@ import Auth from "./pages/Auth";
 import Contribution from "./pages/Contribution";
 import Support from "./pages/Support";
 import Dashboard from "./pages/Dashboard";
+import Profile from "./pages/Profile";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import NotFound from "./pages/NotFound";
 
@@ -47,6 +48,7 @@ const App = () => (
             <Route path="/contribution" element={<Contribution />} />
             <Route path="/support" element={<Support />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/profile" element={<Profile />} />
             <Route path="/payment-success" element={<PaymentSuccess />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
