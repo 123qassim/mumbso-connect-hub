@@ -155,7 +155,7 @@ const About = () => {
           <h2 className="text-3xl font-bold tracking-tight mb-8 text-center">Our History</h2>
           <div className="prose prose-lg max-w-none">
             <p className="text-muted-foreground text-lg mb-4">
-              Maseno University Medical Biotechnology Students Organization (MUMBSO) was founded in 2019 (year of registration) by passionate Medical Biotechnology students at Maseno University who recognized the need for a dedicated organization to support students in this unique program that combines medical biotechnology with information technology.
+              Maseno University Medical Biotechnology Students Organization (MUMBSO) was founded in 2017 by passionate Medical Biotechnology students at Maseno University who recognized the need for a dedicated organization to support students in this unique program that combines medical biotechnology with information technology.
             </p>
             <p className="text-muted-foreground text-lg mb-4">
               Since its inception, MUMBSO has grown into a vibrant community of researchers, innovators, and future healthcare professionals. We have organized numerous workshops, seminars, and research projects that have contributed significantly to student development and community health awareness.
