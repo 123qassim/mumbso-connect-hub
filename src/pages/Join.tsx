@@ -42,7 +42,11 @@ const Join = () => {
 
   useEffect(() => {
     if (user) {
-      navigate("/dashboard");
+      // Give Supabase a moment to fully establish the session
+      const timer = setTimeout(() => {
+        navigate("/dashboard");
+      }, 500);
+      return () => clearTimeout(timer);
     }
   }, [user, navigate]);
 

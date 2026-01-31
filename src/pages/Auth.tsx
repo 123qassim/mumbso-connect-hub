@@ -29,7 +29,10 @@ const Auth = () => {
       if (error) throw error;
 
       toast.success("Successfully signed in!");
-      navigate("/");
+      // Give session a moment to establish before navigating
+      setTimeout(() => {
+        navigate("/dashboard");
+      }, 500);
     } catch (error: any) {
       toast.error(error.message || "Failed to sign in");
     } finally {
@@ -79,10 +82,10 @@ const Auth = () => {
               <TabsTrigger value="signin">Sign In</TabsTrigger>
               <TabsTrigger value="signup">Sign Up</TabsTrigger>
             </TabsList>
-            
-            <TabsContent value="signin">
+
+            <TabsContent value="signin" className="space-y-4">
               <form onSubmit={handleSignIn} className="space-y-4">
-                <div className="space-y-2">
+                <div>
                   <Label htmlFor="signin-email">Email</Label>
                   <Input
                     id="signin-email"
@@ -90,10 +93,11 @@ const Auth = () => {
                     placeholder="your@email.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    disabled={loading}
                     required
                   />
                 </div>
-                <div className="space-y-2">
+                <div>
                   <Label htmlFor="signin-password">Password</Label>
                   <Input
                     id="signin-password"
@@ -101,6 +105,7 @@ const Auth = () => {
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    disabled={loading}
                     required
                   />
                 </div>
@@ -110,20 +115,21 @@ const Auth = () => {
                 </Button>
               </form>
             </TabsContent>
-            
-            <TabsContent value="signup">
+
+            <TabsContent value="signup" className="space-y-4">
               <form onSubmit={handleSignUp} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="signup-name">Display Name (optional)</Label>
+                <div>
+                  <Label htmlFor="signup-name">Display Name</Label>
                   <Input
                     id="signup-name"
                     type="text"
-                    placeholder="Your name"
+                    placeholder="John Doe"
                     value={displayName}
                     onChange={(e) => setDisplayName(e.target.value)}
+                    disabled={loading}
                   />
                 </div>
-                <div className="space-y-2">
+                <div>
                   <Label htmlFor="signup-email">Email</Label>
                   <Input
                     id="signup-email"
@@ -131,10 +137,11 @@ const Auth = () => {
                     placeholder="your@email.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    disabled={loading}
                     required
                   />
                 </div>
-                <div className="space-y-2">
+                <div>
                   <Label htmlFor="signup-password">Password</Label>
                   <Input
                     id="signup-password"
@@ -142,8 +149,8 @@ const Auth = () => {
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    disabled={loading}
                     required
-                    minLength={6}
                   />
                 </div>
                 <Button type="submit" className="w-full" disabled={loading}>

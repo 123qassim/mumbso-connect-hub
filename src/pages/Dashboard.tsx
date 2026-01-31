@@ -25,7 +25,7 @@ interface Profile {
 }
 
 const Dashboard = () => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -33,6 +33,11 @@ const Dashboard = () => {
   const [upcomingEvents, setUpcomingEvents] = useState(0);
 
   useEffect(() => {
+    // Wait for auth loading to complete before redirecting
+    if (authLoading) {
+      return;
+    }
+
     if (!user) {
       navigate("/auth");
       return;
@@ -71,7 +76,7 @@ const Dashboard = () => {
     };
 
     fetchProfile();
-  }, [user, navigate]);
+  }, [user, navigate, authLoading]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -79,7 +84,7 @@ const Dashboard = () => {
     navigate("/");
   };
 
-  if (isLoading) {
+  if (authLoading || isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
