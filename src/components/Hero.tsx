@@ -61,10 +61,10 @@ export const Hero = () => {
             MUMBSO is the official student-run organization at Maseno University empowering the next generation of biotechnology researchers and innovators.
           </p>
           <div className="flex flex-wrap gap-4">
-            <Button asChild variant="hero" size="xl">
+            <Button asChild size="xl" className="bg-primary text-white hover:bg-primary/90 shadow-lg">
               <Link to="/join">Join MUMBSO</Link>
             </Button>
-            <Button asChild variant="secondary" size="xl">
+            <Button asChild size="xl" className="bg-white text-primary hover:bg-white/90 shadow-lg font-semibold">
               <Link to="/events">Upcoming Events</Link>
             </Button>
           </div>
