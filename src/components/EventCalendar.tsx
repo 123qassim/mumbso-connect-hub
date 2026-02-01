@@ -130,7 +130,7 @@ export const EventCalendar = () => {
                     <CardContent className="p-4">
                       <div className="mb-2">
                         <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded-full">
-                          {event.event_type}
+                          {event.event_type || "Event"}
                         </span>
                       </div>
                       <h3 className="font-bold mb-2">{event.title}</h3>
