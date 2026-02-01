@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Link } from "react-router-dom";
 import { NewsletterForm } from "@/components/NewsletterForm";
 import { Dna, Microscope, Brain, Users, BookOpen, Stethoscope } from "lucide-react";
-import studentsImage from "@/assets/image16.jpeg";
+import studentsImage from "@/assets/image15.jpeg";
 import outreachImage from "@/assets/outreach.jpg";
 
 const Index = () => {
