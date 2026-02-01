@@ -11,6 +11,7 @@ import { format, isSameDay } from "date-fns";
 import { MapPin, Clock, Calendar as CalendarIcon } from "lucide-react";
 import { toast } from "sonner";
 import seminarBanner from "@/assets/seminar-banner.jpg";
+import biodataBootcamp from "@/assets/image3.jpeg";
 
 export const EventCalendar = () => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
@@ -109,6 +110,7 @@ export const EventCalendar = () => {
             <div className="space-y-4">
               {eventsOnSelectedDate.map((event) => {
                 const isSeminar = event.title?.includes("Joint Seminar");
+                const isBootcamp = event.title?.includes("Biodata Analysis Bootcamp");
                 return (
                   <Card key={event.id} className="border-2 overflow-hidden">
                     {isSeminar && (
@@ -116,6 +118,13 @@ export const EventCalendar = () => {
                         src={seminarBanner} 
                         alt="Joint Seminar"
                         className="w-full h-32 object-cover"
+                      />
+                    )}
+                    {isBootcamp && (
+                      <img 
+                        src={biodataBootcamp} 
+                        alt="Biodata Analysis Bootcamp"
+                        className="w-full h-48 object-cover"
                       />
                     )}
                     <CardContent className="p-4">
