@@ -26,7 +26,7 @@ export const EventCalendar = () => {
       const { data } = await supabase
         .from("events")
         .select("*")
-        .order("event_date", { ascending: true });
+        .order("date", { ascending: true });
       return data || [];
     },
   });
@@ -65,10 +65,10 @@ export const EventCalendar = () => {
   };
 
   const eventsOnSelectedDate = events?.filter((event) => 
-    selectedDate && isSameDay(new Date(event.event_date), selectedDate)
+    selectedDate && isSameDay(new Date(event.date), selectedDate)
   ) || [];
 
-  const eventDates = events?.map((event) => new Date(event.event_date)) || [];
+  const eventDates = events?.map((event) => new Date(event.date)) || [];
 
   return (
     <div className="grid md:grid-cols-2 gap-6">
@@ -138,7 +138,7 @@ export const EventCalendar = () => {
                       <div className="space-y-1 text-sm text-muted-foreground mb-3">
                         <div className="flex items-center gap-2">
                           <Clock className="h-4 w-4" />
-                          <span>{format(new Date(event.event_date), "p")}</span>
+                          <span>{format(new Date(event.date), "p")}</span>
                         </div>
                         {event.location && (
                           <div className="flex items-center gap-2">
