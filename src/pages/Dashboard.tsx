@@ -24,6 +24,14 @@ interface Profile {
   created_at: string;
 }
 
+interface RegisteredEvent {
+  id: string;
+  event_id: string;
+  title: string;
+  date: string;
+  location: string;
+}
+
 const Dashboard = () => {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
@@ -31,6 +39,7 @@ const Dashboard = () => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [upcomingEvents, setUpcomingEvents] = useState(0);
+  const [registeredEvents, setRegisteredEvents] = useState<RegisteredEvent[]>([]);
 
   useEffect(() => {
     // Wait for auth loading to complete before redirecting
@@ -67,6 +76,27 @@ const Dashboard = () => {
 
         if (count !== null) {
           setUpcomingEvents(count);
+        }
+
+        // Fetch user's registered events
+        const { data: eventRegs } = await supabase
+          .from("event_registrations")
+          .select(`
+            id,
+            event_id,
+            events:event_id(title, date, location)
+          `)
+          .eq("user_email", user.email);
+
+        if (eventRegs) {
+          const registered = eventRegs.map((reg: any) => ({
+            id: reg.id,
+            event_id: reg.event_id,
+            title: reg.events?.title || "Event",
+            date: reg.events?.date || "",
+            location: reg.events?.location || ""
+          }));
+          setRegisteredEvents(registered);
         }
       } catch (error) {
         console.error("Error:", error);
@@ -205,8 +235,7 @@ const Dashboard = () => {
                       variant="outline"
                       size="sm"
                     >
-                      <Settings className="w-4 h-4 mr-2" />
-                      Edit Profile
+                      <Settings className="w-4 h-4" />
                     </Button>
                   </div>
 
@@ -270,27 +299,21 @@ const Dashboard = () => {
                       <Calendar className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
                       <div>
                         <h4 className="font-semibold mb-1">Exclusive Events</h4>
-                        <p className="text-sm text-muted-foreground">
-                          Access to member-only workshops, seminars, and networking events
-                        </p>
+                        <p className="text-sm text-muted-foreground">Attend member-only workshops, seminars, and networking events.</p>
                       </div>
                     </div>
                     <div className="flex items-start gap-4 p-4 bg-secondary/5 rounded-lg border border-secondary/10">
                       <BookOpen className="w-5 h-5 text-secondary mt-0.5 flex-shrink-0" />
                       <div>
-                        <h4 className="font-semibold mb-1">Research Library</h4>
-                        <p className="text-sm text-muted-foreground">
-                          Access to published research papers and scientific resources
-                        </p>
+                        <h4 className="font-semibold mb-1">Research Resources</h4>
+                        <p className="text-sm text-muted-foreground">Access to research papers, publications, and academic materials.</p>
                       </div>
                     </div>
                     <div className="flex items-start gap-4 p-4 bg-accent/5 rounded-lg border border-accent/10">
                       <Users className="w-5 h-5 text-accent mt-0.5 flex-shrink-0" />
                       <div>
-                        <h4 className="font-semibold mb-1">Mentorship Program</h4>
-                        <p className="text-sm text-muted-foreground">
-                          Connect with experienced professionals and research mentors
-                        </p>
+                        <h4 className="font-semibold mb-1">Community Network</h4>
+                        <p className="text-sm text-muted-foreground">Connect with 150+ biotechnology students and professionals.</p>
                       </div>
                     </div>
                   </div>
@@ -298,65 +321,104 @@ const Dashboard = () => {
               </Card>
             </div>
 
-            {/* Profile Completion Card */}
-            <div>
-              <Card className="sticky top-4">
-                <CardHeader>
-                  <CardTitle className="text-lg">Profile Completion</CardTitle>
-                  <CardDescription>Complete your profile to unlock more features</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-semibold">Completion Rate</span>
-                      <span className="text-2xl font-bold text-primary">{completionPercentage}%</span>
-                    </div>
-                    <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
-                      <div
-                        className="bg-primary h-full transition-all duration-500"
-                        style={{ width: `${completionPercentage}%` }}
-                      />
-                    </div>
+            {/* Profile Completion */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Zap className="w-5 h-5" />
+                  Profile Completion
+                </CardTitle>
+                <CardDescription>Complete your profile for best experience</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium">Completion Status</span>
+                    <span className="text-sm font-bold text-primary">{completionPercentage}%</span>
                   </div>
-
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2 text-sm">
-                      <div className={`w-4 h-4 rounded ${profile?.avatar_url ? "bg-primary" : "bg-muted"}`} />
-                      <span className={profile?.avatar_url ? "text-foreground" : "text-muted-foreground"}>
-                        Profile Picture
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      <div className={`w-4 h-4 rounded ${profile?.phone ? "bg-primary" : "bg-muted"}`} />
-                      <span className={profile?.phone ? "text-foreground" : "text-muted-foreground"}>
-                        Phone Number
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      <div className={`w-4 h-4 rounded ${profile?.interests ? "bg-primary" : "bg-muted"}`} />
-                      <span className={profile?.interests ? "text-foreground" : "text-muted-foreground"}>
-                        Areas of Interest
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      <div className={`w-4 h-4 rounded ${profile?.year_of_study ? "bg-primary" : "bg-muted"}`} />
-                      <span className={profile?.year_of_study ? "text-foreground" : "text-muted-foreground"}>
-                        Academic Status
-                      </span>
-                    </div>
+                  <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-primary transition-all duration-500"
+                      style={{ width: `${completionPercentage}%` }}
+                    />
                   </div>
+                </div>
 
-                  <Button
-                    onClick={() => navigate("/profile")}
-                    className="w-full"
-                  >
-                    <Zap className="w-4 h-4 mr-2" />
-                    Complete Profile
-                  </Button>
-                </CardContent>
-              </Card>
-            </div>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 text-sm">
+                    <div className={`w-4 h-4 rounded ${profile?.avatar_url ? "bg-primary" : "bg-muted"}`} />
+                    <span className={profile?.avatar_url ? "text-foreground" : "text-muted-foreground"}>
+                      Profile Picture
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <div className={`w-4 h-4 rounded ${profile?.phone ? "bg-primary" : "bg-muted"}`} />
+                    <span className={profile?.phone ? "text-foreground" : "text-muted-foreground"}>
+                      Phone Number
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <div className={`w-4 h-4 rounded ${profile?.interests ? "bg-primary" : "bg-muted"}`} />
+                    <span className={profile?.interests ? "text-foreground" : "text-muted-foreground"}>
+                      Areas of Interest
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <div className={`w-4 h-4 rounded ${profile?.year_of_study ? "bg-primary" : "bg-muted"}`} />
+                    <span className={profile?.year_of_study ? "text-foreground" : "text-muted-foreground"}>
+                      Academic Status
+                    </span>
+                  </div>
+                </div>
+
+                <Button
+                  onClick={() => navigate("/profile")}
+                  className="w-full"
+                >
+                  <Zap className="w-4 h-4 mr-2" />
+                  Complete Profile
+                </Button>
+              </CardContent>
+            </Card>
           </div>
+        </div>
+      </section>
+
+      <section className="py-12">
+        <div className="container">
+          <h2 className="text-2xl font-bold mb-6">Your Registered Events</h2>
+          {registeredEvents.length > 0 ? (
+            <div className="grid md:grid-cols-2 gap-4">
+              {registeredEvents.map((event) => (
+                <Card key={event.id} className="border-2">
+                  <CardContent className="pt-6">
+                    <h3 className="font-bold mb-2">{event.title}</h3>
+                    <div className="space-y-2 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-4 h-4" />
+                        <span>{new Date(event.date).toLocaleDateString()}</span>
+                      </div>
+                      {event.location && (
+                        <div className="flex items-center gap-2">
+                          <Mail className="w-4 h-4" />
+                          <span>{event.location}</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="mt-4 px-3 py-1 bg-green-100 text-green-800 rounded text-xs font-medium w-fit">
+                      Registered
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <Card>
+              <CardContent className="pt-6">
+                <p className="text-muted-foreground text-center">No events registered yet. <Button variant="link" onClick={() => navigate("/events")}>Explore events</Button></p>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </section>
 
@@ -368,7 +430,7 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="grid md:grid-cols-3 gap-4">
-                <Button variant="outline" className="h-auto py-4 flex-col gap-2">
+                <Button variant="outline" className="h-auto py-4 flex-col gap-2" onClick={() => navigate("/events")}>
                   <Calendar className="w-6 h-6" />
                   <span>Browse Events</span>
                 </Button>
@@ -376,7 +438,7 @@ const Dashboard = () => {
                   <Download className="w-6 h-6" />
                   <span>Download Resources</span>
                 </Button>
-                <Button variant="outline" className="h-auto py-4 flex-col gap-2">
+                <Button variant="outline" className="h-auto py-4 flex-col gap-2" onClick={() => navigate("/members")}>
                   <Users className="w-6 h-6" />
                   <span>View Community</span>
                 </Button>

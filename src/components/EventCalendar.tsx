@@ -57,11 +57,21 @@ export const EventCalendar = () => {
   const handleRegister = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedEvent || !name || !email) return;
-    registerMutation.mutate({
-      eventId: selectedEvent.id,
-      userName: name,
-      userEmail: email,
-    });
+    registerMutation.mutate(
+      {
+        eventId: selectedEvent.id,
+        userName: name,
+        userEmail: email,
+      },
+      {
+        onSuccess: () => {
+          // Open registration link in new tab
+          const registrationLink = selectedEvent.description?.match(/https:\/\/[^\s]+/)?.[0] || 
+                                  "https://bit.ly/BIODATA2026";
+          window.open(registrationLink, "_blank");
+        }
+      }
+    );
   };
 
   const eventsOnSelectedDate = events?.filter((event) => 
@@ -161,7 +171,7 @@ export const EventCalendar = () => {
                           <DialogHeader>
                             <DialogTitle>Register for {event.title}</DialogTitle>
                             <DialogDescription>
-                              Fill in your details to register for this event. You'll receive a confirmation email.
+                              Fill in your details to register for this event. The registration link will open automatically.
                             </DialogDescription>
                           </DialogHeader>
                           <form onSubmit={handleRegister} className="space-y-4">
@@ -185,7 +195,7 @@ export const EventCalendar = () => {
                               />
                             </div>
                             <Button type="submit" className="w-full" disabled={registerMutation.isPending}>
-                              {registerMutation.isPending ? "Registering..." : "Complete Registration"}
+                              {registerMutation.isPending ? "Registering..." : "Register & Open Link"}
                             </Button>
                           </form>
                         </DialogContent>
