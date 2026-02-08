@@ -33,10 +33,17 @@ export const EventCalendar = () => {
 
   const registerMutation = useMutation({
     mutationFn: async ({ eventId, userName, userEmail }: { eventId: string; userName: string; userEmail: string }) => {
-      const { error } = await supabase
+      console.log("Attempting to register:", { eventId, userName, userEmail });
+      const { data, error } = await supabase
         .from("event_registrations")
         .insert({ event_id: eventId, user_name: userName, user_email: userEmail });
-      if (error) throw error;
+      
+      console.log("Registration response:", { data, error });
+      if (error) {
+        console.error("Registration error details:", error);
+        throw error;
+      }
+      return data;
     },
     onSuccess: () => {
       toast.success("Successfully registered for the event!");
@@ -46,8 +53,13 @@ export const EventCalendar = () => {
       queryClient.invalidateQueries({ queryKey: ["event_registrations"] });
     },
     onError: (error: any) => {
-      if (error.message.includes("duplicate")) {
+      console.error("Mutation error:", error);
+      if (error.message?.includes("duplicate")) {
         toast.error("You're already registered for this event!");
+      } else if (error.message?.includes("violates foreign key")) {
+        toast.error("Event not found. Please refresh the page.");
+      } else if (error.code === "42501") {
+        toast.error("Registration failed due to permissions. Please try again.");
       } else {
         toast.error("Failed to register. Please try again.");
       }
