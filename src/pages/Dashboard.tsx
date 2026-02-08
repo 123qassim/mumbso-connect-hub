@@ -24,6 +24,14 @@ interface Profile {
   created_at: string;
 }
 
+interface RegisteredEvent {
+  id: string;
+  event_id: string;
+  title: string;
+  date: string;
+  location: string;
+}
+
 const Dashboard = () => {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
@@ -31,6 +39,7 @@ const Dashboard = () => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [upcomingEvents, setUpcomingEvents] = useState(0);
+  const [registeredEvents, setRegisteredEvents] = useState<RegisteredEvent[]>([]);
 
   useEffect(() => {
     // Wait for auth loading to complete before redirecting
@@ -67,6 +76,40 @@ const Dashboard = () => {
 
         if (count !== null) {
           setUpcomingEvents(count);
+        }
+
+        // Fetch user's registered events
+        const { data: eventRegs, error: regError } = await supabase
+          .from("event_registrations")
+          .select("*")
+          .eq("user_email", user.email);
+
+        if (regError) {
+          console.error("Error fetching registered events:", regError);
+        }
+
+        if (eventRegs && eventRegs.length > 0) {
+          // Fetch event details for all registered events
+          const eventIds = eventRegs.map(reg => reg.event_id);
+          const { data: eventDetails } = await supabase
+            .from("events")
+            .select("id, title, date, location")
+            .in("id", eventIds);
+
+          if (eventDetails) {
+            const registered = eventRegs.map((reg: any) => {
+              const event = eventDetails.find(e => e.id === reg.event_id);
+              return {
+                id: reg.id,
+                event_id: reg.event_id,
+                title: event?.title || "Event",
+                date: event?.date || "",
+                location: event?.location || ""
+              };
+            });
+            setRegisteredEvents(registered);
+            console.log("Registered events loaded:", registered);
+          }
         }
       } catch (error) {
         console.error("Error:", error);
@@ -357,6 +400,44 @@ const Dashboard = () => {
               </Card>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section className="py-12">
+        <div className="container">
+          <h2 className="text-2xl font-bold mb-6">Your Registered Events</h2>
+          {registeredEvents.length > 0 ? (
+            <div className="grid md:grid-cols-2 gap-4">
+              {registeredEvents.map((event) => (
+                <Card key={event.id} className="border-2">
+                  <CardContent className="pt-6">
+                    <h3 className="font-bold mb-2">{event.title}</h3>
+                    <div className="space-y-2 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-4 h-4" />
+                        <span>{new Date(event.date).toLocaleDateString()}</span>
+                      </div>
+                      {event.location && (
+                        <div className="flex items-center gap-2">
+                          <Mail className="w-4 h-4" />
+                          <span>{event.location}</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="mt-4 px-3 py-1 bg-green-100 text-green-800 rounded text-xs font-medium w-fit">
+                      Registered
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <Card>
+              <CardContent className="pt-6">
+                <p className="text-muted-foreground text-center">No events registered yet. <Button variant="link" onClick={() => navigate("/events")}>Explore events</Button></p>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </section>
 
