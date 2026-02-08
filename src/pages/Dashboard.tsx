@@ -7,7 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { SEO } from "@/components/SEO";
-import { LogOut, User, Calendar, BookOpen, Zap, Settings, Users, Download, Mail, Phone, Briefcase } from "lucide-react";
+import { LogOut, User, Calendar, BookOpen, Zap, Settings, Users, Download, Mail, Phone, Briefcase, MapPin } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface Profile {
