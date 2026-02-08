@@ -11,6 +11,7 @@ import { format, isSameDay } from "date-fns";
 import { MapPin, Clock, Calendar as CalendarIcon } from "lucide-react";
 import { toast } from "sonner";
 import seminarBanner from "@/assets/seminar-banner.jpg";
+import biodataBootcamp from "@/assets/image3.jpeg";
 
 export const EventCalendar = () => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
@@ -25,17 +26,24 @@ export const EventCalendar = () => {
       const { data } = await supabase
         .from("events")
         .select("*")
-        .order("event_date", { ascending: true });
+        .order("date", { ascending: true });
       return data || [];
     },
   });
 
   const registerMutation = useMutation({
     mutationFn: async ({ eventId, userName, userEmail }: { eventId: string; userName: string; userEmail: string }) => {
-      const { error } = await supabase
+      console.log("Attempting to register:", { eventId, userName, userEmail });
+      const { data, error } = await supabase
         .from("event_registrations")
         .insert({ event_id: eventId, user_name: userName, user_email: userEmail });
-      if (error) throw error;
+      
+      console.log("Registration response:", { data, error });
+      if (error) {
+        console.error("Registration error details:", error);
+        throw error;
+      }
+      return data;
     },
     onSuccess: () => {
       toast.success("Successfully registered for the event!");
@@ -45,8 +53,13 @@ export const EventCalendar = () => {
       queryClient.invalidateQueries({ queryKey: ["event_registrations"] });
     },
     onError: (error: any) => {
-      if (error.message.includes("duplicate")) {
+      console.error("Mutation error:", error);
+      if (error.message?.includes("duplicate")) {
         toast.error("You're already registered for this event!");
+      } else if (error.message?.includes("violates foreign key")) {
+        toast.error("Event not found. Please refresh the page.");
+      } else if (error.code === "42501") {
+        toast.error("Registration failed due to permissions. Please try again.");
       } else {
         toast.error("Failed to register. Please try again.");
       }
@@ -56,18 +69,28 @@ export const EventCalendar = () => {
   const handleRegister = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedEvent || !name || !email) return;
-    registerMutation.mutate({
-      eventId: selectedEvent.id,
-      userName: name,
-      userEmail: email,
-    });
+    registerMutation.mutate(
+      {
+        eventId: selectedEvent.id,
+        userName: name,
+        userEmail: email,
+      },
+      {
+        onSuccess: () => {
+          // Open registration link in new tab
+          const registrationLink = selectedEvent.description?.match(/https:\/\/[^\s]+/)?.[0] || 
+                                  "https://bit.ly/BIODATA2026";
+          window.open(registrationLink, "_blank");
+        }
+      }
+    );
   };
 
   const eventsOnSelectedDate = events?.filter((event) => 
-    selectedDate && isSameDay(new Date(event.event_date), selectedDate)
+    selectedDate && isSameDay(new Date(event.date), selectedDate)
   ) || [];
 
-  const eventDates = events?.map((event) => new Date(event.event_date)) || [];
+  const eventDates = events?.map((event) => new Date(event.date)) || [];
 
   return (
     <div className="grid md:grid-cols-2 gap-6">
@@ -109,6 +132,7 @@ export const EventCalendar = () => {
             <div className="space-y-4">
               {eventsOnSelectedDate.map((event) => {
                 const isSeminar = event.title?.includes("Joint Seminar");
+                const isBootcamp = event.title?.includes("Biodata Analysis Bootcamp");
                 return (
                   <Card key={event.id} className="border-2 overflow-hidden">
                     {isSeminar && (
@@ -118,10 +142,17 @@ export const EventCalendar = () => {
                         className="w-full h-32 object-cover"
                       />
                     )}
+                    {isBootcamp && (
+                      <img 
+                        src={biodataBootcamp} 
+                        alt="Biodata Analysis Bootcamp"
+                        className="w-full h-48 object-cover"
+                      />
+                    )}
                     <CardContent className="p-4">
                       <div className="mb-2">
                         <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded-full">
-                          {event.event_type}
+                          {event.event_type || "Event"}
                         </span>
                       </div>
                       <h3 className="font-bold mb-2">{event.title}</h3>
@@ -129,7 +160,7 @@ export const EventCalendar = () => {
                       <div className="space-y-1 text-sm text-muted-foreground mb-3">
                         <div className="flex items-center gap-2">
                           <Clock className="h-4 w-4" />
-                          <span>{format(new Date(event.event_date), "p")}</span>
+                          <span>{format(new Date(event.date), "p")}</span>
                         </div>
                         {event.location && (
                           <div className="flex items-center gap-2">
