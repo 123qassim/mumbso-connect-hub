@@ -170,7 +170,7 @@ const Dashboard = () => {
           {/* Profile Card */}
           <Card className="md:col-span-2">
             <CardHeader className="bg-gradient-to-r from-primary/10 to-primary/5 border-b">
-              <div className="flex items-start justify-between">
+              <div className="flex items-start justify-between gap-4">
                 <div className="flex-1">
                   <CardTitle className="text-2xl mb-2">
                     {profile?.first_name} {profile?.surname}
@@ -180,6 +180,13 @@ const Dashboard = () => {
                     {profile?.email}
                   </CardDescription>
                 </div>
+                {profile?.avatar_url && (
+                  <img
+                    src={profile.avatar_url}
+                    alt="Profile Avatar"
+                    className="h-24 w-24 rounded-lg object-cover flex-shrink-0"
+                  />
+                )}
               </div>
             </CardHeader>
             <CardContent className="pt-6 space-y-4">
@@ -226,7 +233,7 @@ const Dashboard = () => {
 
               <div className="flex gap-2 pt-4">
                 <Button
-                  onClick={() => navigate("/dashboard/profile")}
+                  onClick={() => navigate("/profile")}
                   className="flex-1 flex items-center gap-2"
                   variant="outline"
                 >
