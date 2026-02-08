@@ -77,10 +77,14 @@ export const EventCalendar = () => {
       },
       {
         onSuccess: () => {
-          // Open registration link in new tab
-          const registrationLink = selectedEvent.description?.match(/https:\/\/[^\s]+/)?.[0] || 
-                                  "https://bit.ly/BIODATA2026";
-          window.open(registrationLink, "_blank");
+          // Extract registration link if it exists
+          const registrationLink = selectedEvent.description?.match(/https:\/\/[^\s]+/)?.[0];
+          
+          // If event has external registration link, open it
+          if (registrationLink) {
+            window.open(registrationLink, "_blank");
+          }
+          // Otherwise user stays on dashboard where they can see the registered event
         }
       }
     );
