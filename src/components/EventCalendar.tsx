@@ -10,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { format, isSameDay } from "date-fns";
 import { MapPin, Clock, Calendar as CalendarIcon } from "lucide-react";
 import { toast } from "sonner";
-import seminarBanner from "@/assets/seminar-banner.jpg";
+import seminarBanner from "@/assets/mmust_major_event.jpeg";
 import biodataBootcamp from "@/assets/image3.jpeg";
 
 export const EventCalendar = () => {
