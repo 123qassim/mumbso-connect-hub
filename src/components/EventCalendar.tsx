@@ -187,7 +187,7 @@ export const EventCalendar = () => {
                           <DialogHeader>
                             <DialogTitle>Register for {event.title}</DialogTitle>
                             <DialogDescription>
-                              Fill in your details to register for this event. You'll receive a confirmation email.
+                              Fill in your details to register for this event. The registration link will open automatically.
                             </DialogDescription>
                           </DialogHeader>
                           <form onSubmit={handleRegister} className="space-y-4">
@@ -211,7 +211,7 @@ export const EventCalendar = () => {
                               />
                             </div>
                             <Button type="submit" className="w-full" disabled={registerMutation.isPending}>
-                              {registerMutation.isPending ? "Registering..." : "Complete Registration"}
+                              {registerMutation.isPending ? "Registering..." : "Register & Open Link"}
                             </Button>
                           </form>
                         </DialogContent>
